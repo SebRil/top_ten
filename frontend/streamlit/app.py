@@ -7,6 +7,27 @@ from streamlit import runtime
 from streamlit.runtime.scriptrunner import get_script_run_ctx
 import os
 import json
+from requests.auth import HTTPBasicAuth
+
+global server_root_url
+#server_root_url = "http://localhost:5000"
+server_root_url = "https://sebril.pythonanywhere.com"
+global basic_auth
+basic_auth = HTTPBasicAuth('adevep', 'passablejinxaggregate')
+global images_dict
+# Check https://commons.wikimedia.org/wiki/Category:SVG_playing_cards_2
+images_dict = {
+    "1": ["https://upload.wikimedia.org/wikipedia/commons/3/36/Playing_card_club_A.svg","https://upload.wikimedia.org/wikipedia/commons/d/d3/Playing_card_diamond_A.svg"],
+    "2": ["https://upload.wikimedia.org/wikipedia/commons/f/f5/Playing_card_club_2.svg","https://upload.wikimedia.org/wikipedia/commons/5/59/Playing_card_diamond_2.svg"],
+    "3": ["https://upload.wikimedia.org/wikipedia/commons/6/6b/Playing_card_club_3.svg","https://upload.wikimedia.org/wikipedia/commons/8/82/Playing_card_diamond_3.svg"],
+    "4": ["https://upload.wikimedia.org/wikipedia/commons/3/3d/Playing_card_club_4.svg","https://upload.wikimedia.org/wikipedia/commons/2/20/Playing_card_diamond_4.svg"],
+    "5": ["https://upload.wikimedia.org/wikipedia/commons/5/50/Playing_card_club_5.svg","https://upload.wikimedia.org/wikipedia/commons/f/fd/Playing_card_diamond_5.svg"],
+    "6": ["https://upload.wikimedia.org/wikipedia/commons/a/a0/Playing_card_club_6.svg","https://upload.wikimedia.org/wikipedia/commons/8/80/Playing_card_diamond_6.svg"],
+    "7": ["https://upload.wikimedia.org/wikipedia/commons/4/4b/Playing_card_club_7.svg","https://upload.wikimedia.org/wikipedia/commons/e/e6/Playing_card_diamond_7.svg"],
+    "8": ["https://upload.wikimedia.org/wikipedia/commons/e/eb/Playing_card_club_8.svg","https://upload.wikimedia.org/wikipedia/commons/7/78/Playing_card_diamond_8.svg"],
+    "9": ["https://upload.wikimedia.org/wikipedia/commons/2/27/Playing_card_club_9.svg","https://upload.wikimedia.org/wikipedia/commons/9/9e/Playing_card_diamond_9.svg"],
+    "10": ["https://upload.wikimedia.org/wikipedia/commons/3/3e/Playing_card_club_10.svg","https://upload.wikimedia.org/wikipedia/commons/3/34/Playing_card_diamond_10.svg"]
+}
 
 def get_remote_ip() -> str:
     """Get remote ip."""
@@ -26,7 +47,6 @@ print('Session state:')
 #print(st.session_state)
 print(os.environ)
 
-
 st.set_page_config(page_title='Top Ten ADeVeP', layout='wide')
 st.title('Top Ten ADeVeP')
 
@@ -42,31 +62,13 @@ else:
 
 print('User IP: ' + user_ip)
 
-global server_root_url
-server_root_url = "http://localhost:5000"
-
-global images_dict
-# Check https://commons.wikimedia.org/wiki/Category:SVG_playing_cards_2
-images_dict = {
-    "1": ["https://upload.wikimedia.org/wikipedia/commons/3/36/Playing_card_club_A.svg","https://upload.wikimedia.org/wikipedia/commons/d/d3/Playing_card_diamond_A.svg"],
-    "2": ["https://upload.wikimedia.org/wikipedia/commons/f/f5/Playing_card_club_2.svg","https://upload.wikimedia.org/wikipedia/commons/5/59/Playing_card_diamond_2.svg"],
-    "3": ["https://upload.wikimedia.org/wikipedia/commons/6/6b/Playing_card_club_3.svg","https://upload.wikimedia.org/wikipedia/commons/8/82/Playing_card_diamond_3.svg"],
-    "4": ["https://upload.wikimedia.org/wikipedia/commons/3/3d/Playing_card_club_4.svg","https://upload.wikimedia.org/wikipedia/commons/2/20/Playing_card_diamond_4.svg"],
-    "5": ["https://upload.wikimedia.org/wikipedia/commons/5/50/Playing_card_club_5.svg","https://upload.wikimedia.org/wikipedia/commons/f/fd/Playing_card_diamond_5.svg"],
-    "6": ["https://upload.wikimedia.org/wikipedia/commons/a/a0/Playing_card_club_6.svg","https://upload.wikimedia.org/wikipedia/commons/8/80/Playing_card_diamond_6.svg"],
-    "7": ["https://upload.wikimedia.org/wikipedia/commons/4/4b/Playing_card_club_7.svg","https://upload.wikimedia.org/wikipedia/commons/e/e6/Playing_card_diamond_7.svg"],
-    "8": ["https://upload.wikimedia.org/wikipedia/commons/e/eb/Playing_card_club_8.svg","https://upload.wikimedia.org/wikipedia/commons/7/78/Playing_card_diamond_8.svg"],
-    "9": ["https://upload.wikimedia.org/wikipedia/commons/2/27/Playing_card_club_9.svg","https://upload.wikimedia.org/wikipedia/commons/9/9e/Playing_card_diamond_9.svg"],
-    "10": ["https://upload.wikimedia.org/wikipedia/commons/3/3e/Playing_card_club_10.svg","https://upload.wikimedia.org/wikipedia/commons/3/34/Playing_card_diamond_10.svg"]
-}
-
 @st.fragment(run_every=1)
 def get_game_players():
     print('Running fragment get_game_players')
     if 'GAME_ID' in os.environ:
         print('Getting players')
         try:
-            response = requests.post(server_root_url+"/get_players", json={"game_id": os.environ['GAME_ID']})
+            response = requests.post(server_root_url+"/get_players", json={"game_id": os.environ['GAME_ID']}, auth=basic_auth)
         except:
             print('Error getting players (server not up?)')
             return
@@ -90,7 +92,7 @@ def get_game_status():
     if 'GAME_ID' in os.environ:
         print('Getting game status')
         try:
-            response = requests.post(server_root_url+"/check_game_exists", json={"game_id": os.environ['GAME_ID']})
+            response = requests.post(server_root_url+"/check_game_exists", json={"game_id": os.environ['GAME_ID']}, auth=basic_auth)
         except:
             game_status = "Ended"
         if response.json().get('game_exists'):
@@ -108,7 +110,7 @@ def reset_session(caller,refresh=True):
     print("Reset cache initiated by " + caller)
     if caller == "game_master":
         try:
-            response = requests.post(server_root_url+"/destroy_game", json={"game_id": os.environ['GAME_ID']})
+            response = requests.post(server_root_url+"/destroy_game", json={"game_id": os.environ['GAME_ID']}, auth=basic_auth)
         except:
             st.write("Error destroying game. Is the server up?")
             return
@@ -139,7 +141,7 @@ def player_ui():
         game_id = st.text_input("Game ID")
         if st.button("Join game"):
             try:
-                response = requests.post(server_root_url+"/check_game_exists", json={"game_id": game_id})
+                response = requests.post(server_root_url+"/check_game_exists", json={"game_id": game_id}, auth=basic_auth)
             except:
                 st.write("Error joining game. Is the server up?")
                 return
@@ -162,7 +164,7 @@ def player_ui():
                     player_id = st.text_input("Player ID")
                     if st.button("Get number"):
                         try:
-                            response = requests.post(server_root_url+"/get_number", json={"game_id": os.environ['GAME_ID'], "player_id": player_id, "user_ip": user_ip})
+                            response = requests.post(server_root_url+"/get_number", json={"game_id": os.environ['GAME_ID'], "player_id": player_id, "user_ip": user_ip}, auth=basic_auth)
                         except:
                             st.write("Error getting number. Is the server up?")
                             return
@@ -183,7 +185,7 @@ def game_master_ui():
     if 'GAME_ID' not in os.environ:
         if st.button("Start new game"):
             try:
-                response = requests.post(server_root_url+"/new_game", json={"user_ip": user_ip})
+                response = requests.post(server_root_url+"/new_game", json={"user_ip": user_ip}, auth=basic_auth)
             except:
                 st.write("Error starting new game. Is the server up?")
                 return
@@ -239,7 +241,7 @@ def game_master_ui():
                 if st.button("Submit"):
                     print(modified_df.to_dict())
                     try:
-                        response = requests.post(server_root_url+"/guess_all_players", json={"game_id": os.environ['GAME_ID'], "guessed_data": modified_df.to_dict()})
+                        response = requests.post(server_root_url+"/guess_all_players", json={"game_id": os.environ['GAME_ID'], "guessed_data": modified_df.to_dict()}, auth=basic_auth)
                     except:
                         st.write("Error submitting votes. Is the server up?")
                         return
@@ -258,7 +260,7 @@ def spectator_ui():
     st.write("Spectator UI")
     if st.button("Get games"):
             try:
-                response = requests.post(server_root_url+"/get_games")
+                response = requests.post(server_root_url+"/get_games", auth=basic_auth)
             except:
                 st.write("Error getting games. Is the server up?")
                 return
@@ -268,7 +270,7 @@ def spectator_ui():
         game_id = st.text_input("Game ID")
         if st.button("Spectate game"):
             try:
-                response = requests.post(server_root_url+"/check_game_exists", json={"game_id": game_id})
+                response = requests.post(server_root_url+"/check_game_exists", json={"game_id": game_id}, auth=basic_auth)
             except:
                 st.write("Error checking game. Is the server up?")
                 return
@@ -283,21 +285,21 @@ def spectator_ui():
         if st.button("Get all numbers"):
             #response = requests.post(server_root_url+"/all_numbers", json={"game_id": st.session_state.game_id})
             try:
-                response = requests.post(server_root_url+"/all_numbers", json={"game_id": os.environ['GAME_ID']})
+                response = requests.post(server_root_url+"/all_numbers", json={"game_id": os.environ['GAME_ID']}, auth=basic_auth)
             except:
                 st.write("Error getting all numbers. Is the server up?")
                 return
             st.write(response.json().get('player_numbers'))
         if st.button("Get players"):
             try:
-                response = requests.post(server_root_url+"/get_players", json={"game_id": os.environ['GAME_ID']})
+                response = requests.post(server_root_url+"/get_players", json={"game_id": os.environ['GAME_ID']}, auth=basic_auth)
             except:
                 st.write("Error getting players data. Is the server up?")
                 return
             st.write(response.json().get('players_data'))
         if st.button("Get guessing status"):
             try:
-                response = requests.post(server_root_url+"/debug_get_guessing_status", json={"game_id": os.environ['GAME_ID']})
+                response = requests.post(server_root_url+"/debug_get_guessing_status", json={"game_id": os.environ['GAME_ID']}, auth=basic_auth)
             except:
                 st.write("Error getting guessing status. Is the server up?")
                 return
