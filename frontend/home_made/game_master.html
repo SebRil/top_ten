@@ -1,0 +1,46 @@
+<h1>Who is what?</h1>
+
+<script>
+    const serverUrl = 'http://127.0.0.1:5000'; // Replace with your server URL if different
+
+    fetch(`${serverUrl}/get_players`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+        .then(data => {
+            document.getElementById('players').innerText = `Players: ${data.players_data['seb']}`;
+            }).catch(error => console.error('Error:', error));
+
+    /*document.getElementById('playerForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const playerId = document.getElementById('player_id').value;
+        fetch(`${serverUrl}/get_number`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ player_id: playerId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('players').innerText = `Players: ${data.player_number}`;
+        })
+        .catch(error => console.error('Error:', error));
+        
+    });*/
+</script>
+
+<p id="players"></p>
+<!--
+<form id="playerForm">
+    <label for="player_id">Player ID:</label>
+    <input type="text" id="player_id" name="player_id" required>
+    <button type="submit">Get Number</button>
+</form>
+<p id="result"></p>
+-->
+
+</body>
+</html>

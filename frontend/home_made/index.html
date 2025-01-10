@@ -1,0 +1,30 @@
+<h1>Get Your Player Number</h1>
+<form id="playerForm">
+    <label for="player_id">Player ID:</label>
+    <input type="text" id="player_id" name="player_id" required>
+    <button type="submit">Get Number</button>
+</form>
+<p id="result"></p>
+
+<script>
+    const serverUrl = 'http://127.0.0.1:5000'; // Replace with your server URL if different
+
+    document.getElementById('playerForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const playerId = document.getElementById('player_id').value;
+        fetch(`${serverUrl}/get_number`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ player_id: playerId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('result').innerText = `Your number is: ${data.player_number}`;
+        })
+        .catch(error => console.error('Error:', error));
+    });
+</script>
+</body>
+</html>
