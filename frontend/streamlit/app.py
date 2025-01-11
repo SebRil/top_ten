@@ -45,7 +45,7 @@ def get_remote_ip() -> str:
 print('####### RUNNING INSTANCE #######')
 print('Session state:')
 #print(st.session_state)
-print(os.environ)
+#print(os.environ)
 
 st.set_page_config(page_title='Top Ten ADeVeP', layout='wide')
 st.title('Top Ten ADeVeP')
@@ -60,6 +60,7 @@ else:
         user_ip = ".".join(map(str, (random.randint(0, 255) for _ in range(4))))
     os.environ['USER_IP'] = user_ip
 
+st.write('User IP: ' + user_ip)
 print('User IP: ' + user_ip)
 
 @st.fragment(run_every=1)
@@ -113,7 +114,6 @@ def reset_session(caller,refresh=True):
             response = requests.post(server_root_url+"/destroy_game", json={"game_id": os.environ['GAME_ID']}, auth=basic_auth)
         except:
             st.write("Error destroying game. Is the server up?")
-            return
     if 'GAME_ID' in os.environ:
         del os.environ['GAME_ID']
     if 'USER_TYPE' in os.environ:
@@ -180,7 +180,7 @@ def player_ui():
                     st.image(image_url,caption=os.environ['PLAYER_NUMBER'])
 
 def game_master_ui():
-    st.title("You are the Game Master 🧙‍♂️")
+    st.title("You are the Game Master 🧙‍♂️😙")
     #if 'game_id' not in st.session_state:
     if 'GAME_ID' not in os.environ:
         if st.button("Start new game"):
@@ -189,6 +189,8 @@ def game_master_ui():
             except:
                 st.write("Error starting new game. Is the server up?")
                 return
+            print("coucou")
+            print(response)
             if response.json().get('result') == "Too many games, please wait":
                 st.write("Too many games, please wait")
             elif response.json().get('result') == "Invalid IP address":
