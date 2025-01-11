@@ -22,16 +22,16 @@ basic_auth = HTTPBasicAuth(st.secrets['PY_ANYWHERE_USER'], st.secrets['PY_ANYWHE
 global images_dict
 # Check https://commons.wikimedia.org/wiki/Category:SVG_playing_cards_2
 images_dict = {
-    "1": ["https://upload.wikimedia.org/wikipedia/commons/3/36/Playing_card_club_A.svg","https://upload.wikimedia.org/wikipedia/commons/d/d3/Playing_card_diamond_A.svg"],
-    "2": ["https://upload.wikimedia.org/wikipedia/commons/f/f5/Playing_card_club_2.svg","https://upload.wikimedia.org/wikipedia/commons/5/59/Playing_card_diamond_2.svg"],
-    "3": ["https://upload.wikimedia.org/wikipedia/commons/6/6b/Playing_card_club_3.svg","https://upload.wikimedia.org/wikipedia/commons/8/82/Playing_card_diamond_3.svg"],
-    "4": ["https://upload.wikimedia.org/wikipedia/commons/3/3d/Playing_card_club_4.svg","https://upload.wikimedia.org/wikipedia/commons/2/20/Playing_card_diamond_4.svg"],
-    "5": ["https://upload.wikimedia.org/wikipedia/commons/5/50/Playing_card_club_5.svg","https://upload.wikimedia.org/wikipedia/commons/f/fd/Playing_card_diamond_5.svg"],
-    "6": ["https://upload.wikimedia.org/wikipedia/commons/a/a0/Playing_card_club_6.svg","https://upload.wikimedia.org/wikipedia/commons/8/80/Playing_card_diamond_6.svg"],
-    "7": ["https://upload.wikimedia.org/wikipedia/commons/4/4b/Playing_card_club_7.svg","https://upload.wikimedia.org/wikipedia/commons/e/e6/Playing_card_diamond_7.svg"],
-    "8": ["https://upload.wikimedia.org/wikipedia/commons/e/eb/Playing_card_club_8.svg","https://upload.wikimedia.org/wikipedia/commons/7/78/Playing_card_diamond_8.svg"],
-    "9": ["https://upload.wikimedia.org/wikipedia/commons/2/27/Playing_card_club_9.svg","https://upload.wikimedia.org/wikipedia/commons/9/9e/Playing_card_diamond_9.svg"],
-    "10": ["https://upload.wikimedia.org/wikipedia/commons/3/3e/Playing_card_club_10.svg","https://upload.wikimedia.org/wikipedia/commons/3/34/Playing_card_diamond_10.svg"]
+    "1": ["https://upload.wikimedia.org/wikipedia/commons/3/36/Playing_card_club_A.svg","https://upload.wikimedia.org/wikipedia/commons/d/d3/Playing_card_diamond_A.svg","https://upload.wikimedia.org/wikipedia/commons/5/57/Playing_card_heart_A.svg","https://upload.wikimedia.org/wikipedia/commons/2/25/Playing_card_spade_A.svg"],
+    "2": ["https://upload.wikimedia.org/wikipedia/commons/f/f5/Playing_card_club_2.svg","https://upload.wikimedia.org/wikipedia/commons/5/59/Playing_card_diamond_2.svg","https://upload.wikimedia.org/wikipedia/commons/d/d5/Playing_card_heart_2.svg","https://upload.wikimedia.org/wikipedia/commons/f/f2/Playing_card_spade_2.svg"],
+    "3": ["https://upload.wikimedia.org/wikipedia/commons/6/6b/Playing_card_club_3.svg","https://upload.wikimedia.org/wikipedia/commons/8/82/Playing_card_diamond_3.svg","https://upload.wikimedia.org/wikipedia/commons/b/b6/Playing_card_heart_3.svg","https://upload.wikimedia.org/wikipedia/commons/5/52/Playing_card_spade_3.svg"],
+    "4": ["https://upload.wikimedia.org/wikipedia/commons/3/3d/Playing_card_club_4.svg","https://upload.wikimedia.org/wikipedia/commons/2/20/Playing_card_diamond_4.svg","https://upload.wikimedia.org/wikipedia/commons/a/a2/Playing_card_heart_4.svg","https://upload.wikimedia.org/wikipedia/commons/2/2c/Playing_card_spade_4.svg"],
+    "5": ["https://upload.wikimedia.org/wikipedia/commons/5/50/Playing_card_club_5.svg","https://upload.wikimedia.org/wikipedia/commons/f/fd/Playing_card_diamond_5.svg","https://upload.wikimedia.org/wikipedia/commons/5/52/Playing_card_heart_5.svg","https://upload.wikimedia.org/wikipedia/commons/9/94/Playing_card_spade_5.svg"],
+    "6": ["https://upload.wikimedia.org/wikipedia/commons/a/a0/Playing_card_club_6.svg","https://upload.wikimedia.org/wikipedia/commons/8/80/Playing_card_diamond_6.svg","https://upload.wikimedia.org/wikipedia/commons/c/cd/Playing_card_heart_6.svg","https://upload.wikimedia.org/wikipedia/commons/d/d2/Playing_card_spade_6.svg"],
+    "7": ["https://upload.wikimedia.org/wikipedia/commons/4/4b/Playing_card_club_7.svg","https://upload.wikimedia.org/wikipedia/commons/e/e6/Playing_card_diamond_7.svg","https://upload.wikimedia.org/wikipedia/commons/9/94/Playing_card_heart_7.svg","https://upload.wikimedia.org/wikipedia/commons/6/66/Playing_card_spade_7.svg"],
+    "8": ["https://upload.wikimedia.org/wikipedia/commons/e/eb/Playing_card_club_8.svg","https://upload.wikimedia.org/wikipedia/commons/7/78/Playing_card_diamond_8.svg","https://upload.wikimedia.org/wikipedia/commons/5/50/Playing_card_heart_8.svg","https://upload.wikimedia.org/wikipedia/commons/2/21/Playing_card_spade_8.svg"],
+    "9": ["https://upload.wikimedia.org/wikipedia/commons/2/27/Playing_card_club_9.svg","https://upload.wikimedia.org/wikipedia/commons/9/9e/Playing_card_diamond_9.svg","https://upload.wikimedia.org/wikipedia/commons/5/50/Playing_card_heart_9.svg","https://upload.wikimedia.org/wikipedia/commons/e/e0/Playing_card_spade_9.svg"],
+    "10": ["https://upload.wikimedia.org/wikipedia/commons/3/3e/Playing_card_club_10.svg","https://upload.wikimedia.org/wikipedia/commons/3/34/Playing_card_diamond_10.svg","https://upload.wikimedia.org/wikipedia/commons/9/98/Playing_card_heart_10.svg","https://upload.wikimedia.org/wikipedia/commons/8/87/Playing_card_spade_10.svg"]
 }
 
 # Get the user's ip address
@@ -130,6 +130,7 @@ def reset_session(caller,refresh=True):
         st.rerun()
 
 def player_ui():
+    st.title("You are a Player 🃏")
     if not in_env('GAME_ID'):
         game_id = st.text_input("Game ID")
         if st.button("Join game"):
@@ -172,7 +173,7 @@ def player_ui():
                     st.image(image_url,caption=get_env('PLAYER_NUMBER'))
 
 def game_master_ui():
-    st.title("You are the Game Master 🧙‍♂️😙")
+    st.title("You are the Game Master 🧙‍♂️")
     if not in_env('GAME_ID'):
         if st.button("Start new game"):
             try:
@@ -245,7 +246,7 @@ def game_master_ui():
                         reset_session("game_master",refresh=False)
 
 def spectator_ui():
-    st.write("Spectator UI")
+    st.title("You are a Spectator 👀")
     if st.button("Get games"):
             try:
                 response = requests.post(server_root_url+"/get_games", auth=basic_auth)
@@ -300,7 +301,7 @@ user_ip = get_remote_ip()
 initialize_env()
 print(curr_env)
 print('User IP: ' + user_ip)
-st.write('User IP: ' + user_ip)
+#st.write('User IP: ' + user_ip)
 
 if not in_env('USER_TYPE'):
     # Define user type
