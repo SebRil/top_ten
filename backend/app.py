@@ -34,14 +34,24 @@ def get_number():
         return jsonify(player_number="Game has ended, please join a new game.")
     if user_ip not in games[game_id]['players_data'] :
         if len(games[game_id]['players_data']) < 10:
-            games[game_id]['players_data'][user_ip] = {}
-            games[game_id]['players_data'][user_ip]['player_id'] = player_id
-            games[game_id]['players_data'][user_ip]['value'] = random.randint(1, 10)
-            return jsonify(player_number=games[game_id]['players_data'][user_ip]['value'])
+            player_exists = False
+            for ip in games[game_id]['players_data']:
+                if player_id == games[game_id]['players_data'][ip]['player_id']:
+                    player_exists = True
+            if player_exists:
+                return jsonify(player_number="Player ID already exists!")
+            else:
+                games[game_id]['players_data'][user_ip] = {}
+                games[game_id]['players_data'][user_ip]['player_id'] = player_id
+                games[game_id]['players_data'][user_ip]['value'] = random.randint(1, 10)
+                return jsonify(player_number=games[game_id]['players_data'][user_ip]['value'])
         else:       
             return jsonify(player_number="Game is full!")
-    else:   
-        return jsonify(player_number=games[game_id]['players_data'][user_ip]['value'])
+    else:
+        if player_id == games[game_id]['players_data'][user_ip]['player_id']:
+            return jsonify(player_number=games[game_id]['players_data'][user_ip]['value'])
+        else:
+            return jsonify(player_number="You are already connected with the ID: '"+ games[game_id]['players_data'][user_ip]['player_id'] + "'. Please use it to reconnect.")
 
 @app.route('/all_numbers', methods=['POST'])
 def all_numbers():
