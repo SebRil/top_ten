@@ -13,7 +13,7 @@ global server_root_url
 #server_root_url = "http://localhost:5000"
 server_root_url = "https://sebril.pythonanywhere.com"
 global basic_auth
-basic_auth = HTTPBasicAuth('adevep', 'passablejinxaggregate')
+basic_auth = HTTPBasicAuth(st.secrets['PY_ANYWHERE_USER'], st.secrets['PY_ANYWHERE_PW'])
 global images_dict
 # Check https://commons.wikimedia.org/wiki/Category:SVG_playing_cards_2
 images_dict = {
