@@ -300,7 +300,7 @@ global user_ip
 user_ip = get_remote_ip()
 initialize_env()
 print(curr_env)
-print('User IP: ' + user_ip)
+#print('User IP: ' + user_ip)
 #st.write('User IP: ' + user_ip)
 
 if not in_env('USER_TYPE'):

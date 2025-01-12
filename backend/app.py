@@ -10,9 +10,6 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Store game object
-#player_numbers = {} # Store player numbers
-#game_finished = False
-#guessing_status = {} # Store player guessing status
 games = {}
 
 def generate_random_string(length):
@@ -29,10 +26,12 @@ def get_number():
     player_id = request.json.get('player_id')
     user_ip = request.json.get('user_ip')
     print('Retrieving number for player: ' + player_id + ' with IP address: ' + user_ip)
-    #games[game_id]['players_data'][user_ip]['player_id'] = player_id
+    # If the game doesn't exist anymore
     if game_id not in games:
         return jsonify(player_number="Game has ended, please join a new game.")
+    # If the user has never joined the game before
     if user_ip not in games[game_id]['players_data'] :
+        # Ensure game hasn't reached the maximum number of players & the player id is not taken
         if len(games[game_id]['players_data']) < 10:
             player_exists = False
             for ip in games[game_id]['players_data']:
@@ -40,13 +39,22 @@ def get_number():
                     player_exists = True
             if player_exists:
                 return jsonify(player_number="Player ID already exists!")
+            # Add the player to the game, ensuring their number is unique
             else:
                 games[game_id]['players_data'][user_ip] = {}
                 games[game_id]['players_data'][user_ip]['player_id'] = player_id
-                games[game_id]['players_data'][user_ip]['value'] = random.randint(1, 10)
+                player_value_exists = True
+                while player_value_exists:
+                    player_value_exists = False
+                    player_value = random.randint(1, 10)
+                    for ip in games[game_id]['players_data']:
+                        if games[game_id]['players_data'][ip]['value'] == player_value:
+                            player_value_exists = True                    
+                games[game_id]['players_data'][user_ip]['value'] = player_value
                 return jsonify(player_number=games[game_id]['players_data'][user_ip]['value'])
         else:       
             return jsonify(player_number="Game is full!")
+    # If the user has already joined the game before, retrieve their associated value (unless they provided a different user id, then throw an error)
     else:
         if player_id == games[game_id]['players_data'][user_ip]['player_id']:
             return jsonify(player_number=games[game_id]['players_data'][user_ip]['value'])
@@ -72,8 +80,6 @@ def destroy_game(game_id=''):
         game_id = request.json.get('game_id')
     if game_id not in games:
         abort(404)
-        #return jsonify(result="Game does not exist")
-    #games[game_id]['game_finished'] = True
     games.pop(game_id)
 
 @app.route('/guess_one_player', methods=['POST'])
@@ -97,8 +103,6 @@ def guess_one_player():
         if len(games[game_id]['players_data'].keys()) == len(games[game_id]['guessing_status'].keys()):
             if all(value == "OK" for value in games[game_id]['guessing_status'].values()):
                 result_msg += "All players guessed correctly! The game will end."
-            #games[game_id]['game_finished'] = True
-            #games.pop(game_id)
             destroy_game(game_id)
         return jsonify(result=result_msg)
     else:
