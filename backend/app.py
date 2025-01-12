@@ -48,8 +48,9 @@ def get_number():
                     player_value_exists = False
                     player_value = random.randint(1, 10)
                     for ip in games[game_id]['players_data']:
-                        if games[game_id]['players_data'][ip]['value'] == player_value:
-                            player_value_exists = True                    
+                        if 'value' in games[game_id]['players_data'][ip]:
+                            if games[game_id]['players_data'][ip]['value'] == player_value:
+                                player_value_exists = True                    
                 games[game_id]['players_data'][user_ip]['value'] = player_value
                 return jsonify(player_number=games[game_id]['players_data'][user_ip]['value'])
         else:       
