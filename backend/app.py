@@ -20,8 +20,8 @@ def generate_random_string(length):
 def home():
     return jsonify(message="Welcome to the Backend API!")
 
-@app.route('/get_number', methods=['POST'])
-def get_number():
+@app.route('/get_player_data', methods=['POST'])
+def get_player_data():
     game_id = request.json.get('game_id')
     player_id = request.json.get('player_id')
     user_ip = request.json.get('user_ip')
@@ -46,13 +46,13 @@ def get_number():
                 player_value_exists = True
                 while player_value_exists:
                     player_value_exists = False
-                    player_value = random.randint(1, 10)
+                    player_value = random.randint(1, games[game_id]['player_count'])
                     for ip in games[game_id]['players_data']:
                         if 'value' in games[game_id]['players_data'][ip]:
                             if games[game_id]['players_data'][ip]['value'] == player_value:
                                 player_value_exists = True                    
                 games[game_id]['players_data'][user_ip]['value'] = player_value
-                return jsonify(player_number=games[game_id]['players_data'][user_ip]['value'])
+                return jsonify(player_number=games[game_id]['players_data'][user_ip]['value'],game_theme=games[game_id]['game_theme'])
         else:       
             return jsonify(player_number="Game is full!")
     # If the user has already joined the game before, retrieve their associated value (unless they provided a different user id, then throw an error)
@@ -116,11 +116,7 @@ def guess_all_players():
     if game_id not in games:
         return jsonify(players_data="Game has ended, please join a new game.")
     else:
-        #if games[game_id]['game_finished']:
-        #return jsonify(result="Game is finished, please start a new one")
         guessed_data = request.json.get('guessed_data')
-
-        print(guessed_data)
         # Received: {'player_id': {'0': 'seb', '1': 'da'}, 'player_value': {'0': '445', '1': '500'}}
         # Expected: {'player_numbers': {'seb': 6, 'daph': 1}, 'guessing_status': {}, 'game_finished': False}
         for i in range(len(guessed_data['player_id'])):
@@ -145,6 +141,8 @@ def guess_all_players():
 @app.route('/new_game', methods=['POST'])
 def new_game():
     user_ip = request.json.get('user_ip')
+    game_theme = request.json.get('game_theme')
+    player_count = request.json.get('player_count')
     try:
         socket.inet_aton(user_ip)
     except:
@@ -153,6 +151,10 @@ def new_game():
     if len(games) >= 10:
         print("Too many games, please wait")
         return jsonify(result="Too many games, please wait")
+    if not game_theme or game_theme.isspace():
+        return jsonify(result="Game theme cannot be empty")
+    if player_count <= 0 or player_count >= 11:
+        return jsonify(result="The game can't be played with this number of player")
     game_id = generate_random_string(8)
     if game_id in games:
         while game_id in games:
@@ -162,6 +164,8 @@ def new_game():
     games[game_id] = {}
     games[game_id]['players_data'] = {}
     games[game_id]['guessing_status'] = {}
+    games[game_id]['game_theme'] = game_theme
+    games[game_id]['player_count'] = player_count
     games[game_id]['game_master_ip'] = user_ip
     #games[game_id]['game_finished'] = False
     print("Created a new game with ID: " + game_id)

@@ -8,17 +8,24 @@ from streamlit.runtime.scriptrunner import get_script_run_ctx
 import os
 import json
 from requests.auth import HTTPBasicAuth
+from openai import OpenAI
 
 print('####### RUNNING INSTANCE #######')
 st.set_page_config(page_title='Top Ten ADeVeP', layout='wide')
-st.title('Top Ten ADeVeP')
 
-# Setting glibal vars
+# Setting global vars
 global server_root_url
 #server_root_url = "http://localhost:5000"
 server_root_url = "https://sebril.pythonanywhere.com"
 global basic_auth
-basic_auth = HTTPBasicAuth(st.secrets['PY_ANYWHERE_USER'], st.secrets['PY_ANYWHERE_PW'])
+if server_root_url == "http://localhost:5000":
+    basic_auth=None
+else:
+    basic_auth = HTTPBasicAuth(st.secrets['PY_ANYWHERE_USER'], st.secrets['PY_ANYWHERE_PW'])
+global watson_api_key
+global watson_api_url
+watson_api_key=st.secrets['WATSON_API_KEY']
+watson_api_url=st.secrets['WATSON_API_URL']
 global images_dict
 # Check https://commons.wikimedia.org/wiki/Category:SVG_playing_cards_2
 images_dict = {
@@ -48,6 +55,8 @@ def initialize_env():
         curr_env = json.loads(os.environ['USERS_DATA'])
         if user_ip not in curr_env:
             curr_env[user_ip] = {}
+    if not in_env('GAME_THEME'):
+        set_env_var('GAME_THEME', '')
 
 # Functions assuring that the curr env var reflects what is in os.environ
 def set_env_var(var_name,var_value):
@@ -60,6 +69,20 @@ def in_env(var_name):
     return var_name in curr_env[user_ip]
 def get_env(var_name):
     return curr_env[user_ip][var_name]
+
+@st.dialog("Information")
+def show_popup(text):
+    st.write(text)
+
+@st.dialog("Error")
+def show_error(text):
+    st.write(text)
+
+@st.dialog('Sorry, you failed')
+def show_results_popup(text):
+    st.write("Unfortunately you made at least one mistake, see results below:")
+    st.dataframe(text)
+    st.write("The game will now end, please start a new one.")
 
 @st.fragment(run_every=1)
 def get_game_players():
@@ -88,30 +111,51 @@ def get_game_players():
                 st.rerun()
 
 @st.fragment(run_every=1)
-def get_game_status():
-    print('Running fragment game_game_status')
+def get_game_info():
+    print('Running fragment get_game_info')
     if in_env('GAME_ID'):
         print('Getting game status')
         try:
             response = requests.post(server_root_url+"/check_game_exists", json={"game_id": get_env('GAME_ID')}, auth=basic_auth)
         except:
-            game_status = "Ended"
+            game_status_loc = "Ended"
         if response.json().get('game_exists'):
-            game_status = "Ongoing"
+            game_status_loc = "Ongoing"
         else:
-            game_status = "Ended"
+            game_status_loc = "Ended"
+        print('Getting game players')
+        try:
+            response = requests.post(server_root_url+"/get_players", json={"game_id": get_env('GAME_ID')}, auth=basic_auth)
+        except:
+            other_players_loc = []
+        other_players_loc=response.json().get('players_data')
         if not in_env('GAME_STATUS'):
-            set_env_var('GAME_STATUS', game_status)
+            print('refreshing after creating game status')
+            set_env_var('GAME_STATUS', game_status_loc)
+            set_env_var('OTHER_PLAYERS', other_players_loc)
             st.rerun()
-        if get_env('GAME_STATUS') != game_status:
-            set_env_var('GAME_STATUS', game_status)
+        if get_env('GAME_STATUS') != game_status_loc and get_env('OTHER_PLAYERS') == other_players_loc:
+            print('refreshing 2')
+            set_env_var('GAME_STATUS', game_status_loc)
             st.rerun()
-        
+        elif get_env('GAME_STATUS') != game_status_loc and get_env('OTHER_PLAYERS') != other_players_loc:
+            print('refreshing 3')
+            set_env_var('GAME_STATUS', game_status_loc)
+            set_env_var('OTHER_PLAYERS', other_players_loc)
+            st.rerun()
+        elif get_env('GAME_STATUS') == game_status_loc and get_env('OTHER_PLAYERS') != other_players_loc:
+            print(get_env('OTHER_PLAYERS'))
+            print('refreshing 4')
+            print(other_players_loc)
+            set_env_var('OTHER_PLAYERS', other_players_loc)
+            print(get_env('OTHER_PLAYERS'))
+            st.rerun()
+
 def reset_session(caller,refresh=True):
     print("Reset cache initiated by " + caller)
     if caller == "game_master":
         try:
-            response = requests.post(server_root_url+"/destroy_game", json={"game_id": get_env('GAME_ID')}, auth=basic_auth)
+            requests.post(server_root_url+"/destroy_game", json={"game_id": get_env('GAME_ID')}, auth=basic_auth)
         except:
             st.write("Error destroying game. Is the server up?")
     if in_env('GAME_ID'):
@@ -126,71 +170,123 @@ def reset_session(caller,refresh=True):
         del_env_var('PLAYERS_LIST')
     if in_env('GAME_STATUS'):
         del_env_var('GAME_STATUS')
+    if in_env('OTHER_PLAYERS'):
+        del_env_var('OTHER_PLAYERS')
+    if in_env('GAME_THEME'):
+        del_env_var('GAME_THEME')
     if refresh:
         st.rerun()
 
 def player_ui():
     st.title("You are a Player 🃏")
-    if not in_env('GAME_ID'):
+    if not in_env('GAME_ID') and not in_env('PLAYER_ID') and not in_env('PLAYER_NUMBER'):
+        print('Offering to join a game')
         game_id = st.text_input("Game ID")
+        player_id = st.text_input("Player ID")
         if st.button("Join game"):
             try:
                 response = requests.post(server_root_url+"/check_game_exists", json={"game_id": game_id}, auth=basic_auth)
             except:
-                st.write("Error joining game. Is the server up?")
+                st.write("Error checking game. Is the server up?")
                 return
+            print(response.json().get('game_exists'))
             if response.json().get('game_exists'):
-                set_env_var('GAME_ID', game_id)
-                st.rerun()
+                try:
+                    response = requests.post(server_root_url+"/get_player_data", json={"game_id": game_id, "player_id": player_id, "user_ip": user_ip}, auth=basic_auth)
+                except:
+                    st.write("Error getting number. Is the server up?")
+                    return
+                if response.json().get('player_number') == "Player ID already exists!.":
+                    st.write("Player ID already exists!")
+                elif str(response.json().get('player_number')).startswith("You are already connected"):
+                    st.write(response.json().get('player_number'))
+                else:
+                    set_env_var('GAME_ID', game_id)
+                    set_env_var('PLAYER_ID', player_id)
+                    set_env_var('PLAYER_NUMBER', str(response.json().get('player_number')))
+                    set_env_var('GAME_THEME', str(response.json().get('game_theme')))
+                    #st_javascript('reload()')
+                    st.rerun()
             else:
                 st.write("Game does not exist!")
     else:
-        get_game_status()
+        get_game_info()
         if in_env('GAME_STATUS'):
             if get_env('GAME_STATUS') == "Ended":
-                st.write("Game has ended, please join a new game.")
+                show_popup("Game has ended, please join a new game.")
             else:
-                if not in_env('PLAYER_NUMBER'):
-                    player_id = st.text_input("Player ID")
-                    if st.button("Get number"):
-                        try:
-                            response = requests.post(server_root_url+"/get_number", json={"game_id": get_env('GAME_ID'), "player_id": player_id, "user_ip": user_ip}, auth=basic_auth)
-                            print(response.json())
-                        except:
-                            st.write("Error getting number. Is the server up?")
-                            return
-                        if response.json().get('player_number') == "Player ID already exists!.":
-                            st.write("Player ID already exists!")
-                        elif str(response.json().get('player_number')).startswith("You are already connected"):
-                            st.write(response.json().get('player_number'))
-                        else:
-                            set_env_var('PLAYER_ID', player_id)
-                            set_env_var('PLAYER_NUMBER', str(response.json().get('player_number')))
-                            st.rerun()
-                else:
-                    st.title(get_env('PLAYER_ID') + ", your card is: " + get_env('PLAYER_NUMBER'))
+                col1, col2 = st.columns([0.8,0.2])
+                player_id = get_env('PLAYER_ID')
+                with col1:
+                    st.header("The theme of this game is: " + get_env('GAME_THEME'))
+                    st.write(player_id + ", your card is: " + get_env('PLAYER_NUMBER'))
                     image_url = random.choice(images_dict[get_env('PLAYER_NUMBER')])
                     st.image(image_url,caption=get_env('PLAYER_NUMBER'))
+                with col2:
+                    st.header('Other players')
+                    if in_env('OTHER_PLAYERS'):
+                        other_players_1 = get_env('OTHER_PLAYERS').copy()
+                        if player_id in other_players_1:
+                            other_players_1.remove(player_id)
+                        if other_players_1 != []:
+                            df = pd.DataFrame(other_players_1,columns=['Username'])
+                            st.dataframe(
+                                other_players_1,
+                                use_container_width=True,
+                                hide_index =True
+                            )
+                        else:
+                            st.write("Waiting for other players...")
+        else:
+            show_error("The game status couldn't be found. This error should never happen, please contact the developer.")
 
 def game_master_ui():
     st.title("You are the Game Master 🧙‍♂️")
     if not in_env('GAME_ID'):
+        st.header("Game settings")
+        st.write("What will be the theme of this game?")
+        col1, col2 = st.columns([0.7,0.3])
+        with st.container():
+            with col1:
+                game_theme = st.text_input(label='',value=get_env('GAME_THEME'),label_visibility="collapsed")
+                set_env_var('GAME_THEME',game_theme)
+                st.write("How many players will there be?")                
+                player_count = st.number_input(label='',label_visibility="collapsed",max_value=10,min_value=1)
+            with col2:
+                if st.button("Generate theme"):
+                    client = OpenAI(
+                        api_key=st.secrets['API_KEY']
+                    )
+                    completion = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        store=True,
+                        messages=[
+                            {"role": "user", "content": "Generate a theme similar to this: 'Your best vacation destination' or 'Your best childhood memory' etc. Keep the answer extra short."},
+                        ]
+                    )
+                    set_env_var('GAME_THEME', completion.choices[0].message.content.replace('\'',''))
+                    st.rerun()
         if st.button("Start new game"):
-            try:
-                response = requests.post(server_root_url+"/new_game", json={"user_ip": user_ip}, auth=basic_auth)
-            except:
-                st.write("Error starting new game. Is the server up?")
-                return
-            if response.json().get('result') == "Too many games, please wait":
-                st.write("Too many games, please wait")
-            elif response.json().get('result') == "Invalid IP address":
-                st.write("Invalid IP address")
+            if get_env('GAME_THEME') == '' or get_env('GAME_THEME').isspace():
+                show_error("Please define a game theme before starting")
             else:
-                st.write(response.json().get('result'))
-                set_env_var('GAME_ID', response.json().get('result').split("ID: ")[1])
-                st.rerun()
+                try:
+                    response = requests.post(server_root_url+"/new_game", json={"user_ip": user_ip,"game_theme": get_env('GAME_THEME'),"player_count":player_count}, auth=basic_auth)
+                except:
+                    st.write("Error starting new game. Is the server up?")
+                    return
+                if response.json().get('result') == "Too many games, please wait":
+                    st.write("Too many games, please wait")
+                elif response.json().get('result') == "Invalid IP address":
+                    st.write("Invalid IP address")
+                else:
+                    #st.write(response.json().get('result'))
+                    set_env_var('GAME_ID', response.json().get('result').split("ID: ")[1])
+                    #st_javascript('reload()')
+                    st.rerun()
     else:
         st.write("Game ID: " + get_env('GAME_ID'))
+        st.write("Game theme: " + get_env('GAME_THEME'))
         st.header("Vote for the players values")
         get_game_players() # run a loop to check for potential player changes
         if in_env('PLAYERS_LIST'):
@@ -237,12 +333,14 @@ def game_master_ui():
                     guessing_status = response.json().get('guessing_status')
                     if all(status == 'OK' for status in guessing_status.values()):
                         st.balloons()
-                        st.write("Congratulations! All values are correct. The game will now end, please start a new one.")
+                        show_popup("Congratulations! All values are correct. The game will now end, please start a new one.")
+                        #st.write("Congratulations! All values are correct. The game will now end, please start a new one.")
                         reset_session("game_master",refresh=False)
                     else:
-                        st.write("Unfortunately you made at least one mistake, see results below:")
-                        st.write(response.json().get('guessing_status'))
-                        st.write("The game will now end, please start a new one.")
+                        #show_popup("Unfortunately you made at least one mistake, see results below:")
+                        show_results_popup(response.json().get('guessing_status'))
+                        #st.write(response.json().get('guessing_status'))
+                        #st.write("The game will now end, please start a new one.")
                         reset_session("game_master",refresh=False)
 
 def spectator_ui():
@@ -290,18 +388,15 @@ def spectator_ui():
                 return
             st.write(response.json().get('guessing_status'))
 
-#def refresh():
-#    js_script = "reload()"
-#    st_javascript(js_script)
-
 ########################### MAIN ###########################
 # Get current user's ip and initialize environment
 global user_ip
 user_ip = get_remote_ip()
 initialize_env()
 print(curr_env)
-#print('User IP: ' + user_ip)
-#st.write('User IP: ' + user_ip)
+
+st.sidebar.title('Top Ten ADeVeP')
+#st.sidebar.divider()
 
 if not in_env('USER_TYPE'):
     # Define user type
@@ -323,15 +418,15 @@ if not in_env('USER_TYPE'):
         st.rerun()
 else:
     if get_env('USER_TYPE') == "player":
-        if st.button("Back"):
+        if st.sidebar.button("🏠 Home"):
             reset_session("player")
         player_ui()
     elif get_env('USER_TYPE') == "game_master":
-        if st.button("Back"):
+        if st.sidebar.button("🏠 Home"):
             reset_session("game_master")
         game_master_ui()
     elif get_env('USER_TYPE') == "spectator":
-        if st.button("Back"):
+        if st.sidebar.button("🏠 Home"):
             reset_session("spectator")
         spectator_ui()
     else:
