@@ -179,9 +179,10 @@ def player_ui():
         print('Offering to join a game')
         game_id = st.text_input("Game ID")
         player_id = st.text_input("Username")
-        if player_id == '' or player_id.isspace():
-            show_popup('Please enter a username')
         if st.button("Join game"):
+            if player_id == '' or player_id.isspace():
+                show_popup('Please enter a username')
+                return
             try:
                 response = requests.post(server_root_url+"/check_game_exists", json={"game_id": game_id}, auth=basic_auth)
             except:

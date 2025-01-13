@@ -143,11 +143,11 @@ def new_game():
     user_ip = request.json.get('user_ip')
     game_theme = request.json.get('game_theme')
     player_count = request.json.get('player_count')
-    try:
-        socket.inet_aton(user_ip)
-    except:
-        print("Invalid IP address: " + user_ip)
-        return jsonify(result="Invalid IP address")
+    #try:
+    #    socket.inet_aton(user_ip)
+    #except:
+    #    print("Invalid IP address: " + user_ip)
+    #    return jsonify(result="Invalid IP address")
     if len(games) >= 10:
         print("Too many games, please wait")
         return jsonify(result="Too many games, please wait")
