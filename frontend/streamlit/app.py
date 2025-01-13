@@ -259,11 +259,12 @@ def game_master_ui():
                         model="gpt-4o-mini",
                         store=True,
                         messages=[
-                            {"role": "user", "content": "Generate a theme similar to this: 'Your best vacation destination' or 'Your best childhood memory' etc. Keep the answer extra short."},
+                            {"role": "user", "content": "Generate a theme similar to this: 'Your best vacation destination' or 'Your best childhood memory' etc. There  Keep the answer extra short."},
                         ]
                     )
                     set_env_var('GAME_THEME', completion.choices[0].message.content.replace('\'',''))
                     st.rerun()
+        st.write('Your IP: ' + user_ip)
         if st.button("Start new game"):
             if get_env('GAME_THEME') == '' or get_env('GAME_THEME').isspace():
                 show_error("Please define a game theme before starting")
