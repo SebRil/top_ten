@@ -22,10 +22,6 @@ if server_root_url == "http://localhost:5000":
     basic_auth=None
 else:
     basic_auth = HTTPBasicAuth(st.secrets['PY_ANYWHERE_USER'], st.secrets['PY_ANYWHERE_PW'])
-global watson_api_key
-global watson_api_url
-watson_api_key=st.secrets['WATSON_API_KEY']
-watson_api_url=st.secrets['WATSON_API_URL']
 global images_dict
 # Check https://commons.wikimedia.org/wiki/Category:SVG_playing_cards_2
 images_dict = {
