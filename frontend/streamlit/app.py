@@ -178,7 +178,9 @@ def player_ui():
     if not in_env('GAME_ID') and not in_env('PLAYER_ID') and not in_env('PLAYER_NUMBER'):
         print('Offering to join a game')
         game_id = st.text_input("Game ID")
-        player_id = st.text_input("Player ID")
+        player_id = st.text_input("Username")
+        if player_id == '' or player_id.isspace():
+            show_popup('Please enter a username')
         if st.button("Join game"):
             try:
                 response = requests.post(server_root_url+"/check_game_exists", json={"game_id": game_id}, auth=basic_auth)
