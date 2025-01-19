@@ -410,7 +410,8 @@ def welcome_ui():
         col1, col2, col3 = st.columns([0.4,0.2,0.4])
         with col2:
             st.markdown("<h1 style='text-align: center;'>Top Ten ADeVeP</h1>", unsafe_allow_html=True)
-            st.image("./resources/welcome_image.jpg")
+            #st.image("./resources/welcome_image.jpg")
+            st.image("https://ibb.co/BgcfW1r")            
             username = st.text_input("Username")
             st.divider()
     with st.container():
