@@ -329,7 +329,10 @@ def leave_game():
 @app.route('/get_game_theme', methods=['POST'])
 def get_game_theme():
     game_id = request.json.get('game_id')
-    return jsonify(success=True,game_theme=games[game_id]['game_theme'])
+    if game_id in games:
+        return jsonify(success=True,game_theme=games[game_id]['game_theme'])
+    else:
+        return jsonify(success=False,message='Game ID not found')
     
 
 if __name__ == '__main__':
