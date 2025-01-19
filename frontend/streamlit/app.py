@@ -18,8 +18,8 @@ st.set_page_config(page_title='Top Ten ADeVeP', layout='wide')
 
 # Setting global vars
 global server_root_url
-server_root_url = "http://localhost:5000"
-#server_root_url = "https://sebril.pythonanywhere.com"
+#server_root_url = "http://localhost:5000"
+server_root_url = "https://sebril.pythonanywhere.com"
 global basic_auth
 if server_root_url == "http://localhost:5000":
     basic_auth=None
