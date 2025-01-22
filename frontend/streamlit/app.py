@@ -51,6 +51,7 @@ def get_remote_ip() -> str:
 def initialize_env():
     if 'USERS_DATA' not in os.environ:
         os.environ['USERS_DATA'] = json.dumps({})
+        st.rerun()
     else:
         curr_env = json.loads(os.environ['USERS_DATA'])
         if user_ip not in curr_env:
