@@ -18,6 +18,8 @@ st.set_page_config(page_title='Top Ten ADeVeP', layout='wide')
 
 # Setting global vars
 global server_root_url
+global curr_env
+global user_ip
 #server_root_url = "http://localhost:5000"
 server_root_url = "https://sebril.pythonanywhere.com"
 global basic_auth
@@ -47,7 +49,6 @@ def get_remote_ip() -> str:
 
 # Set up environment
 def initialize_env():
-    global curr_env
     if 'USERS_DATA' not in os.environ:
         os.environ['USERS_DATA'] = json.dumps({})
     else:
@@ -504,7 +505,6 @@ def become_player():
 
 ########################### MAIN ###########################
 # Get current user's ip and initialize environment
-global user_ip
 user_ip = get_remote_ip()
 initialize_env()
 
