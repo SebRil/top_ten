@@ -18,7 +18,6 @@ st.set_page_config(page_title='Top Ten ADeVeP', layout='wide')
 
 # Setting global vars
 global server_root_url
-global curr_env
 global user_ip
 #server_root_url = "http://localhost:5000"
 server_root_url = "https://sebril.pythonanywhere.com"
@@ -49,6 +48,7 @@ def get_remote_ip() -> str:
 
 # Set up environment
 def initialize_env():
+    global curr_env
     if 'USERS_DATA' not in os.environ:
         print('setting users_data')
         os.environ['USERS_DATA'] = json.dumps({})
@@ -61,8 +61,6 @@ def initialize_env():
         if user_ip not in curr_env:
             curr_env[user_ip] = {}
         print(curr_env)
-    #if not in_env('GAME_THEME'):
-    #    set_env_var('GAME_THEME', '')
 
 # Functions assuring that the curr env var reflects what is in os.environ
 def set_env_var(var_name,var_value):
