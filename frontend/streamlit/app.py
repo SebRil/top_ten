@@ -251,16 +251,20 @@ def player_ui():
                     if st.button('Draw a card'):
                         if not in_env('GAME_THEME'):
                             show_popup('You cannot draw a card until the game master has decided on a theme')
-                        try:
-                            response = requests.post(server_root_url+"/draw_card", json={"game_id": get_env('GAME_ID'),"username":get_env('USERNAME'),"user_ip": user_ip}, auth=basic_auth)
-                        except:
-                            st.write("Error. Is the server up?")
-                            return
-                        if not response.json().get('success'):
-                            st.write(response.json().get('message'))
                         else:
-                            set_env_var('PLAYER_NUMBER', response.json().get('value'))
-                            st.rerun()
+                            if get_env('GAME_THEME').isspace():
+                                show_popup('You cannot draw a card until the game master has decided on a theme')
+                            else:
+                                try:
+                                    response = requests.post(server_root_url+"/draw_card", json={"game_id": get_env('GAME_ID'),"username":get_env('USERNAME'),"user_ip": user_ip}, auth=basic_auth)
+                                except:
+                                    st.write("Error. Is the server up?")
+                                    return
+                                if not response.json().get('success'):
+                                    st.write(response.json().get('message'))
+                                else:
+                                    set_env_var('PLAYER_NUMBER', response.json().get('value'))
+                                    st.rerun()
                 else:
                     st.write("Your card is: " + get_env('PLAYER_NUMBER'))
                     image_url = random.choice(images_dict[get_env('PLAYER_NUMBER')])
